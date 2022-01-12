@@ -15,18 +15,21 @@ class Window:
         self.win = pygame.display.set_mode((win_w, win_h))
 
         self.clock = pygame.time.Clock()
-        self.speed = 1000
+        self.speed = 100
 
-    def redraw_win(self, car, track, agent):
+    def redraw_win(self, cars, track, agent=False):
 
         self.clock.tick(self.speed)
 
         pygame.draw.rect(self.win, (255, 255, 255), (0, 0, self.win_w, self.win_h))
 
-        self.draw_car(car_img, car)
+        for car in cars:
+            self.draw_car(car_img, car)
         self.draw_track(track)
         self.draw_track_check(track)
-        self.draw_radar(car, agent, track)
+        if agent:
+            for car in cars:
+                self.draw_radar(car, agent, track)
 
         pygame.display.update()
 

@@ -2,7 +2,7 @@ import pygame
 import math
 import numpy as np
 from help import Point
-from help import get_points
+from help import get_points, give_length
 
 car_img = pygame.image.load('pic/car_img.png')
 
@@ -21,19 +21,14 @@ class Car:
 
     def act(self, action):
 
-        the_wheel = [action[0], action[1], action[2]]
-        the_motor = [action[3], action[4], action[5]]
+        wheel = action[0]
+        motor = [action[1], action[2]]
 
-        if np.array_equal(the_wheel, [1, 0, 0]):
-            self.go_left()
-        elif np.array_equal(the_wheel, [0, 0, 1]):
-            self.go_right()
-        else:
-            self.straight()
+        self.steer(wheel)
 
-        if np.array_equal(the_motor, [1, 0, 0]):
+        if motor[0] > 0:
             self.gas()
-        elif np.array_equal(the_motor, [1, 0, 0]):
+        elif motor[1] > 0:
             self.brake()
         else:
             self.roll()
@@ -71,14 +66,9 @@ class Car:
         self.y -= math.sin(self.a) * self.vel
         
     def gas(self):
-        if self.vel < 4:
-            self.vel += 2
-        elif self.vel > 10:
-            self.vel = self.vel
-        elif self.vel < 0:
-            self.vel = self.vel * 1.1
-        else:
-            self.vel += self.vel * (1 / math.sqrt(self.vel))
+        if self.vel > 200: return
+        if self.vel < 5: self.vel += 1
+        self.vel *= 1.01
 
     def brake(self):
         if self.vel < 1:
@@ -93,13 +83,16 @@ class Car:
             self.vel = 0
 
     def go_right(self):
-        self.angle -= 1
+        self.angle -= 1 
 
     def go_left(self):
         self.angle += 1
 
     def straight(self):
         self.angle = self.angle
+
+    def steer(self, v):
+        self.angle += v * 5
 
 
     def get_check1(self, track):
@@ -110,7 +103,7 @@ class Car:
 
         for n, pon in enumerate(track.checkpoints):
 
-            if n == self.gotten or self.gotten - 20 == n:
+            if n == self.gotten or self.gotten - 50 == n:
 
                 points = get_points(1,
                                     track.checkpoints[n].get_x1(),
@@ -123,6 +116,7 @@ class Car:
                     if int(self.x) <= point.get_x() <= int(self.x + width):
                         if int(self.y) <= point.get_y() <= int(self.y + height):
                             if pon.get_start():
+                                self.gotten += 1
                                 return 2
                             else:
                                 pon.set_col((200, 0, 0))
@@ -184,7 +178,7 @@ class Car:
 
     def play_step(self, action, track):
 
-        self.frame_iteration += 1
+        self.lap_time += 1
         self.check_time += 1
 
         for event in pygame.event.get():
@@ -192,26 +186,42 @@ class Car:
                 pygame.quit()
                 quit()
 
-        self.act1(action)
+        self.act(action)
 
         reward = 0
         game_over = False
 
         if self.collide(track) or self.check_time > 500:
             game_over = True
-            reward = -100
+            reward = 0
 
         elif self.get_check1(track) == 1:
-            reward = 10
+            reward = int(10/self.check_time) + 5
             self.score += 1
             self.check_time = 0
 
         elif self.get_check1(track) == 2:
-            reward = int(100 / self.frame_iteration * 100)
-            self.score = int(1000 / self.frame_iteration)
+            reward = int(100 / self.lap_time) + 50
+            self.score += int(100 / self.lap_time)
+            self.lap_time = 0
             game_over = True
 
         return reward, game_over, self.score
+
+    def get_state(self, track):
+
+        state1 = []
+
+        for i in range(5):
+            ang = self.angle - 90 + i * 45
+
+            state1.append(give_length(ang, self, track))
+
+        state2 = [self.x, self.y, self.vel]
+
+        state = state1 + state2
+
+        return np.array(state, dtype=int)
 
     def reset(self, track):
 
@@ -221,7 +231,7 @@ class Car:
         self.angle = track.get_start_angle()
         self.vel = 0
 
-        self.frame_iteration = 0
+        self.lap_time = 0
         self.check_time = 0
         self.stag = 0
         self.score = 0

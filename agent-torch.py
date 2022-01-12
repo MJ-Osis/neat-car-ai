@@ -3,10 +3,10 @@ import random
 import numpy as np
 from collections import deque
 from car import Car
-from track1 import make_track
+from track import make_track
 from window import Window
 from model import Linear_QNet, QTrainer
-from helper import plot
+from helper import Plotter
 from help import give_length
 
 MAX_MEMORY = 1000000
@@ -108,18 +108,10 @@ class Agent:
 
     def set_epsilon(self, epsilon):
         self.epsilon = epsilon
-        print(self.epsilon)
+        print("Epsilon: " + str(epsilon))
 
 
 def train():
-    plot_scores = []
-    plot_mean_scores = []
-    plot_rewards = []
-    plot_mean_rewards = []
-
-    total_score = 0
-    total_rewards = 0
-    record = 0
 
     win = Window(1080, 480)
 
@@ -127,6 +119,8 @@ def train():
 
     agent = Agent()
     car = Car(track)
+
+    plotter = Plotter()
 
     reward = 0
 
@@ -157,25 +151,12 @@ def train():
             agent.n_games += 1
             agent.train_long_memory()
 
-            if score > record:
-                record = score
+            if plotter.check_record(score):
                 agent.model.save()
 
-            agent.set_epsilon(5/record)
+            agent.set_epsilon(5/plotter.record)
 
-
-
-            print('Game', agent.n_games, 'Score', score, 'Record:', record)
-
-            plot_scores.append(score)
-            plot_rewards.append(reward/10 + 10)
-            total_score += score
-            total_rewards += reward
-            mean_score = total_score / agent.n_games
-            mean_reward = total_rewards / agent.n_games
-            plot_mean_scores.append(mean_score)
-            plot_mean_rewards.append(mean_reward/10)
-            plot(plot_scores, plot_rewards, plot_mean_scores, plot_mean_rewards)
+            plotter.update(score, reward, agent.n_games)
 
             reward = 0
 

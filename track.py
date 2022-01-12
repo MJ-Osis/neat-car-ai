@@ -165,7 +165,10 @@ class Track:
         xm = self.barrier_p2[0].get_x() - self.barrier_p1[0].get_x()
         ym = self.barrier_p2[0].get_y() - self.barrier_p1[0].get_y()
 
-        alpha = math.degrees(math.atan(ym/xm))
+        if xm == 0: slope = 0 
+        else: slope = ym/xm
+
+        alpha = math.degrees(math.atan(slope))
 
         if alpha >= 0:
             beta = 90 - alpha

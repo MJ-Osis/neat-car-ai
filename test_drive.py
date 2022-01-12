@@ -2,7 +2,7 @@ import pygame
 import math
 from car import Car
 from window import Window
-from track1 import make_track
+from track import make_track
 
 
 
@@ -12,7 +12,7 @@ def main():
 
     race_track = make_track(win)
 
-    car = Car(race_track.get_start_x(), race_track.get_start_y(), race_track.get_start_angle())
+    car = Car(race_track)
 
     clock = pygame.time.Clock()
 
