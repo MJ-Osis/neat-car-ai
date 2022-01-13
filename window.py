@@ -15,7 +15,7 @@ class Window:
         self.win = pygame.display.set_mode((win_w, win_h))
 
         self.clock = pygame.time.Clock()
-        self.speed = 100
+        self.speed = 30
 
     def redraw_win(self, cars, track, agent=False):
 

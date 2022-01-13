@@ -103,7 +103,7 @@ class Car:
 
         for n, pon in enumerate(track.checkpoints):
 
-            if n == self.gotten or self.gotten - 50 == n:
+            if n == self.gotten or self.gotten % 50 == n:
 
                 points = get_points(1,
                                     track.checkpoints[n].get_x1(),
@@ -116,6 +116,8 @@ class Car:
                     if int(self.x) <= point.get_x() <= int(self.x + width):
                         if int(self.y) <= point.get_y() <= int(self.y + height):
                             if pon.get_start():
+                                for pon in track.checkpoints:
+                                    pon.set_col((0, 200, 0))
                                 self.gotten += 1
                                 return 2
                             else:
@@ -188,25 +190,34 @@ class Car:
 
         self.act(action)
 
-        reward = 0
+        reward = 1
         game_over = False
 
         if self.collide(track) or self.check_time > 500:
             game_over = True
             reward = 0
 
-        elif self.get_check1(track) == 1:
-            reward = int(10/self.check_time) + 5
+        c = self.get_check1(track)
+
+        if c == 0: return reward, game_over, self.score
+            
+        elif c == 2:
+            reward = int(500 / self.lap_time) + 50
+            self.score += int(100 / self.lap_time)
+            if self.lap_time < self.best_lap or self.best_lap == 0:
+                self.best_lap = self.lap_time
+            self.lap_time = 0
+            self.lap_count += 1
+            print("Lap completed, best lap: " + str(self.best_lap))
+
+        elif c == 1:
+            reward = 10
             self.score += 1
             self.check_time = 0
 
-        elif self.get_check1(track) == 2:
-            reward = int(100 / self.lap_time) + 50
-            self.score += int(100 / self.lap_time)
-            self.lap_time = 0
-            game_over = True
-
         return reward, game_over, self.score
+
+        
 
     def get_state(self, track):
 
@@ -237,3 +248,6 @@ class Car:
         self.score = 0
 
         self.gotten = 1
+
+        self.best_lap = 0
+        self.lap_count = 0
